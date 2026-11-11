@@ -102,7 +102,7 @@ Sul server servono solo **Docker**, `docker-compose.yml` e `.env` – nessun cod
 ```bash
 mkdir -p /opt/amica-robots-form && cd /opt/amica-robots-form
 # copia docker-compose.yml e .env.example dal repository
-cp .env.example .env && nano .env        # compila API key, utenti, SESSION_SECRET, IMAGE
+cp .env.example .env && nano .env        # compila API key, utenti, SESSION_SECRET
 
 # solo se il pacchetto GHCR è privato: token GitHub (classic) con scope read:packages
 echo "<TOKEN>" | docker login ghcr.io -u <utente-github> --password-stdin
