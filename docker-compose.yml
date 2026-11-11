@@ -1,7 +1,3 @@
-# Docker Compose per il SERVER: scarica solo l'immagine pubblicata su GHCR.
-# Uso:
-#   cp .env.example .env   # e compila i valori
-#   docker compose pull && docker compose up -d
 services:
   amica-robots-form:
     image: ghcr.io/palmdomenico/amica-robots-form:latest
@@ -9,12 +5,4 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "${HOST_PORT:-3000}:3000"
-    # Decommenta per usare un file utenti (AUTH_USERS_FILE=/app/config/users.json)
-    # volumes:
-    #   - ./users.json:/app/config/users.json:ro
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - "3001:3000"
