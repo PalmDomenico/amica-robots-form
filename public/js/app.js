@@ -849,7 +849,6 @@
       const res = await fetch('/api/me', { credentials: 'same-origin' });
       if (res.status === 401) return window.location.replace('/login');
       const me = await res.json();
-      $('#user-chip').textContent = me.user;
       $('#api-warning').hidden = !!me.apiConfigured;
     } catch { /* offline */ }
   }

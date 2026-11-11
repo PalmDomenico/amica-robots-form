@@ -54,12 +54,6 @@ h1, h2, h3 { margin: 0; line-height: 1.25; }
 .brand span { font-size: 12px; color: var(--muted); }
 .brand-lg strong { font-size: 18px; }
 .topbar-right { display: flex; align-items: center; gap: 10px; }
-.user-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: 999px;
-  background: var(--primary-soft); color: var(--primary-600); font-weight: 600; font-size: 13px;
-}
-.user-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
 
 /* ---------- Layout ---------- */
 .layout {
