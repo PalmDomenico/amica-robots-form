@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Invio eventi · Amica Robot Events</title>
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/static/img/favicon.svg" alt="" width="32" height="32" />
+      <div><strong>Amica</strong><span>Robot Events</span></div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge badge-warn" id="api-warning" hidden title="ROBOT_API_KEY non configurata sul server">API key mancante</span>
+      <span class="user-chip" id="user-chip">…</span>
+      <button class="btn btn-ghost btn-sm" id="logout-btn" type="button">Esci</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="col-main">
+      <!-- 1. Dati evento -->
+      <div class="card">
+        <div class="card-head">
+          <h2><span class="step">1</span> Dati evento</h2>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm" type="button" id="import-btn">Importa JSON</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="reset-btn">Svuota</button>
+          </div>
+        </div>
+        <div class="grid grid-3">
+          <label class="field">
+            <span>Tipo identificativo</span>
+            <select id="patient-mode">
+              <option value="patient">Paziente</option>
+              <option value="robot">Robot (prefisso robot_)</option>
+            </select>
+          </label>
+          <label class="field span-2">
+            <span>patient_id <em class="req">*</em></span>
+            <div class="input-group">
+              <span class="input-prefix" id="patient-prefix" hidden>robot_</span>
+              <input type="text" id="patient-id" placeholder="es. PAT000001" autocomplete="off" list="patient-history" />
+              <datalist id="patient-history"></datalist>
+            </div>
+          </label>
+          <label class="field">
+            <span>type <em class="req">*</em></span>
+            <select id="event-type">
+              <option value="dialog">dialog</option>
+              <option value="question">question</option>
+              <option value="answer">answer</option>
+              <option value="ai_question">ai_question</option>
+              <option value="ai_answer">ai_answer</option>
+              <option value="__custom">altro…</option>
+            </select>
+          </label>
+          <label class="field" id="custom-type-field" hidden>
+            <span>type personalizzato</span>
+            <input type="text" id="custom-type" placeholder="es. quiz_result" />
+          </label>
+          <label class="field" id="timestamp-field">
+            <span>timestamp <em class="req">*</em></span>
+            <div class="input-group">
+              <input type="datetime-local" step="1" id="event-ts" />
+              <button class="btn btn-ghost btn-sm" type="button" data-now="event-ts">Adesso</button>
+            </div>
+          </label>
+        </div>
+        <p class="hint" id="type-hint"></p>
+      </div>
+
+      <!-- 2. Sessione (solo dialog) -->
+      <div class="card" id="session-card">
+        <div class="card-head">
+          <h2><span class="step">2</span> Sessione</h2>
+          <label class="switch">
+            <input type="checkbox" id="session-auto" checked />
+            <span>Calcola dalle voci</span>
+          </label>
+        </div>
+        <div class="grid grid-2">
+          <label class="field">
+            <span>session_start</span>
+            <div class="input-group">
+              <input type="datetime-local" step="1" id="session-start" disabled />
+              <button class="btn btn-ghost btn-sm" type="button" data-now="session-start" disabled>Adesso</button>
+            </div>
+          </label>
+          <label class="field">
+            <span>session_end</span>
+            <div class="input-group">
+              <input type="datetime-local" step="1" id="session-end" disabled />
+              <button class="btn btn-ghost btn-sm" type="button" data-now="session-end" disabled>Adesso</button>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 3. Voci -->
+      <div class="card">
+        <div class="card-head">
+          <h2><span class="step" id="entries-step">3</span> Voci <small class="muted">(payload.entries)</small> <span class="count" id="entries-count">0</span></h2>
+          <div class="card-actions">
+            <select id="template-select" class="select-sm" aria-label="Carica modello">
+              <option value="">Carica modello…</option>
+              <option value="questionario">Questionario di gradimento (dialog)</option>
+              <option value="quiz">Quiz domanda/risposta (dialog)</option>
+              <option value="storia">Storia interattiva (dialog)</option>
+              <option value="ai">Domanda e risposta AI (ai_answer)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="blocks" class="blocks"></div>
+
+        <div class="empty" id="blocks-empty">
+          Nessuna voce. Aggiungi un blocco qui sotto oppure carica un modello.
+        </div>
+
+        <div class="add-bar">
+          <span class="muted">Aggiungi blocco:</span>
+          <button class="btn btn-soft btn-sm" type="button" data-add="single">+ Voce singola</button>
+          <button class="btn btn-soft btn-sm" type="button" data-add="pair">+ Domanda / risposta</button>
+          <button class="btn btn-soft btn-sm" type="button" data-add="rating">+ Valutazione 1-5</button>
+          <span class="add-bar-sep"></span>
+          <label class="field-inline">
+            <span class="muted">Intervallo auto</span>
+            <input type="number" id="auto-step" min="0" max="3600" value="5" class="input-xs" /> s
+          </label>
+          <button class="btn btn-ghost btn-sm" type="button" id="retime-btn" title="Riassegna i timestamp delle voci in sequenza partendo da session_start / timestamp evento">Ricalcola orari</button>
+        </div>
+      </div>
+
+      <!-- 4. Avanzate -->
+      <details class="card card-details">
+        <summary><h2><span class="step">4</span> Campi aggiuntivi del payload <small class="muted">(avanzato)</small></h2></summary>
+        <p class="hint">Oggetto JSON unito al payload (es. <code>{"robot_model": "Aphel", "location": "Corner"}</code>). Le chiavi <code>entries</code>, <code>session_start</code>, <code>session_end</code> generate dal form hanno la precedenza.</p>
+        <textarea id="extra-json" class="code" rows="5" spellcheck="false" placeholder="{ }"></textarea>
+        <p class="field-error" id="extra-json-error" hidden></p>
+      </details>
+    </section>
+
+    <aside class="col-side">
+      <div class="card sticky">
+        <div class="card-head">
+          <h2>Anteprima richiesta</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="copy-btn">Copia</button>
+        </div>
+        <pre class="code preview" id="preview"></pre>
+        <ul class="issues" id="issues"></ul>
+        <button class="btn btn-primary btn-block btn-lg" type="button" id="send-btn">Invia evento</button>
+        <div id="result" class="result" hidden></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Ultimi invii</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="clear-history">Pulisci</button>
+        </div>
+        <ul class="history" id="history"></ul>
+        <p class="muted small" id="history-empty">Nessun invio in questa sessione del browser.</p>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Dialog import -->
+  <dialog id="import-dialog" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>Importa JSON</h3>
+      <p class="muted small">Incolla un corpo richiesta (<code>patient_id, timestamp, type, payload</code>) oppure un documento della collection Mongo (<code>source_id, data, raw_body</code>).</p>
+      <textarea id="import-text" class="code" rows="12" spellcheck="false"></textarea>
+      <p class="field-error" id="import-error" hidden></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" value="cancel">Annulla</button>
+        <button class="btn btn-primary" id="import-confirm" value="default">Importa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog conferma invio -->
+  <dialog id="confirm-dialog" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>Confermi l'invio?</h3>
+      <p id="confirm-text" class="muted"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" value="cancel">Annulla</button>
+        <button class="btn btn-primary" value="ok">Invia</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Template: voce singola -->
+  <template id="tpl-single">
+    <div class="block" data-kind="single">
+      <div class="block-head">
+        <span class="block-handle">⋮⋮</span>
+        <span class="block-title">Voce</span>
+        <select class="select-sm" data-f="tag" aria-label="Categoria"></select>
+        <div class="block-tools"></div>
+      </div>
+      <div class="part" data-part="a"></div>
+    </div>
+  </template>
+
+  <!-- Template: domanda/risposta o valutazione -->
+  <template id="tpl-pair">
+    <div class="block" data-kind="pair">
+      <div class="block-head">
+        <span class="block-handle">⋮⋮</span>
+        <span class="block-title">Domanda / risposta</span>
+        <select class="select-sm" data-f="tag" aria-label="Categoria"></select>
+        <div class="block-tools"></div>
+      </div>
+      <div class="part" data-part="a"></div>
+      <div class="part" data-part="b"></div>
+    </div>
+  </template>
+
+  <!-- Template: parte di una voce (type + timestamp + content) -->
+  <template id="tpl-part">
+    <div class="part-row">
+      <label class="field field-type">
+        <span class="part-label">type</span>
+        <input type="text" data-f="type" list="entry-types" />
+      </label>
+      <label class="field field-ts">
+        <span>timestamp</span>
+        <input type="datetime-local" step="1" data-f="timestamp" />
+      </label>
+    </div>
+    <label class="field">
+      <span>content</span>
+      <textarea data-f="content" rows="2"></textarea>
+    </label>
+    <div class="rating" hidden></div>
+  </template>
+
+  <datalist id="entry-types">
+    <option value="question"></option>
+    <option value="answer"></option>
+    <option value="ai_question"></option>
+    <option value="ai_answer"></option>
+    <option value="video"></option>
+    <option value="dance"></option>
+  </datalist>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
