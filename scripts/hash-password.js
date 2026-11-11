@@ -3,7 +3,7 @@
 /**
  * Genera un hash bcrypt da usare in AUTH_USERS / AUTH_USERS_FILE.
  * Uso:  node scripts/hash-password.js "LaMiaPassword"
- *       docker run --rm ghcr.io/<owner>/amica-robots-form node scripts/hash-password.js "LaMiaPassword"
+ *       docker run --rm ghcr.io/palmdomenico/amica-robots-form node scripts/hash-password.js "LaMiaPassword"
  */
 const bcrypt = require('bcryptjs');
 

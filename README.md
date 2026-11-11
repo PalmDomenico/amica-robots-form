@@ -59,7 +59,7 @@ Tutta la configurazione avviene tramite variabili d'ambiente (vedi [`.env.exampl
 ### Password con hash bcrypt (consigliato)
 
 ```bash
-docker run --rm ghcr.io/<owner>/amica-robots-form node scripts/hash-password.js "LaMiaPassword"
+docker run --rm ghcr.io/palmdomenico/amica-robots-form node scripts/hash-password.js "LaMiaPassword"
 ```
 
 Nel file `.env` raddoppia ogni `$` dell'hash (`$$2b$$12$$...`) perché docker compose interpreta `$` come variabile,
@@ -87,9 +87,9 @@ A ogni push su `main` (o tag `vX.Y.Z`) la GitHub Action costruisce l'immagine mu
 (amd64/arm64) e la pubblica su:
 
 ```
-ghcr.io/<owner>/amica-robots-form:latest
-ghcr.io/<owner>/amica-robots-form:sha-<commit>
-ghcr.io/<owner>/amica-robots-form:<versione>   (solo per i tag vX.Y.Z)
+ghcr.io/palmdomenico/amica-robots-form:latest
+ghcr.io/palmdomenico/amica-robots-form:sha-<commit>
+ghcr.io/palmdomenico/amica-robots-form:<versione>   (solo per i tag vX.Y.Z)
 ```
 
 > Il pacchetto GHCR eredita la visibilità del repository. Se il repo è privato, sul server serve un login
@@ -122,7 +122,7 @@ Senza compose:
 
 ```bash
 docker run -d --name amica-robots-form --restart unless-stopped \
-  --env-file .env -p 3000:3000 ghcr.io/<owner>/amica-robots-form:latest
+  --env-file .env -p 3000:3000 ghcr.io/palmdomenico/amica-robots-form:latest
 ```
 
 ### HTTPS

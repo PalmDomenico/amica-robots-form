@@ -4,7 +4,7 @@
 #   docker compose pull && docker compose up -d
 services:
   amica-robots-form:
-    image: ${IMAGE:-ghcr.io/palmdom/amica-robots-form:latest}
+    image: ${IMAGE:-ghcr.io/palmdomenico/amica-robots-form:latest}
     container_name: amica-robots-form
     restart: unless-stopped
     env_file: .env
