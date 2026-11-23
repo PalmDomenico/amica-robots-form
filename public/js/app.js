@@ -855,15 +855,20 @@
     $('#session-start').addEventListener('input', (e) => { state.sessionStart = e.target.value; changed(); });
     $('#session-end').addEventListener('input', (e) => { state.sessionEnd = e.target.value; changed(); });
 
-    $$('[data-now]').forEach((b) => b.addEventListener('click', () => {
-      const id = b.dataset.now;
+    // Gestione bottoni "Adesso"
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-now]');
+      if (!btn) return;
+      e.preventDefault();
+      const id = btn.dataset.now;
       const v = nowLocal();
       if (id === 'event-ts') state.timestamp = v;
       if (id === 'session-start') state.sessionStart = v;
       if (id === 'session-end') state.sessionEnd = v;
-      $('#' + id).value = v;
+      const input = document.getElementById(id);
+      if (input) input.value = v;
       changed();
-    }));
+    });
 
     $$('[data-add]').forEach((b) => b.addEventListener('click', () => {
       state.blocks.push(makeBlock(b.dataset.add));
