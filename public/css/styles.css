@@ -163,6 +163,10 @@ textarea { resize: vertical; min-height: 38px; }
 .btn-sm { padding: 5px 10px; font-size: 12.5px; }
 .btn-lg { padding: 12px 16px; font-size: 15px; }
 .btn-block { width: 100%; }
+.btn[hidden],
+.field-inline[hidden] {
+  display: none !important;
+}
 
 .icon-btn {
   width: 28px; height: 28px; display: inline-grid; place-items: center;
