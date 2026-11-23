@@ -263,9 +263,29 @@
     $('#type-hint').textContent = TYPE_HINTS[state.type] || '';
 
     const isDialog = effectiveType() === 'dialog';
+    const isCustom = state.type === '__custom';
     $('#session-card').hidden = !isDialog;
     $('#entries-step').textContent = isDialog ? '3' : '2';
     $$('.card-details .step')[0].textContent = isDialog ? '4' : '3';
+
+    // Gestione visibilita' selettiva dei pulsanti di aggiunta in base al tipo
+    const btnPair = $('[data-add="pair"]');
+    const btnRating = $('[data-add="rating"]');
+    const btnSingle = $('[data-add="single"]');
+    const retimeBtn = $('#retime-btn');
+    const autoStepField = $('#auto-step')?.closest('.field-inline');
+
+    if (btnPair) btnPair.hidden = !isDialog && !isCustom;
+    if (btnRating) btnRating.hidden = !isDialog && !isCustom;
+    if (btnSingle) {
+      if (state.type === 'ai_answer') {
+        btnSingle.hidden = true; // per ai_answer c'e' solo la coppia
+      } else {
+        btnSingle.hidden = false;
+      }
+    }
+    if (retimeBtn) retimeBtn.hidden = !isDialog;
+    if (autoStepField) autoStepField.hidden = !isDialog;
 
     $('#session-auto').checked = state.sessionAuto;
     ['session-start', 'session-end'].forEach((id) => {
@@ -756,32 +776,56 @@
     });
     $('#event-type').addEventListener('change', (e) => {
       state.type = e.target.value;
+      const tsBase = state.timestamp || nowLocal();
+      // Sempre svuota e ricrea il blocco iniziale coerente con il tipo selezionato
+      state.blocks = [];
       if (state.type === 'ai_answer') {
         state.patientMode = 'robot';
-        if (!state.blocks.length) {
-          state.blocks.push(makeBlock('pair', {
-            typeA: 'ai_question',
-            typeB: 'ai_answer',
-            tag: ''
-          }));
-        } else if (state.blocks[0] && state.blocks[0].kind === 'pair') {
-          state.blocks[0].a.type = 'ai_question';
-          if (state.blocks[0].b) state.blocks[0].b.type = 'ai_answer';
-        }
+        if (!state.patientId) state.patientId = 'EAA007UBT10000011';
+        state.blocks.push(makeBlock('pair', {
+          timestamp: tsBase,
+          typeA: 'ai_question',
+          contentA: 'Come ti chiami e cosa puoi fare?',
+          typeB: 'ai_answer',
+          contentB: 'Certo, mi chiamo Aphelino! Sono qui per farti compagnia e chiacchierare.',
+          tag: ''
+        }));
       } else if (state.type === 'ai_question') {
         state.patientMode = 'robot';
-        if (!state.blocks.length) {
-          state.blocks.push(makeBlock('single', { typeA: 'ai_question', tag: '' }));
-        }
+        if (!state.patientId) state.patientId = 'EAA007UBT10000011';
+        state.blocks.push(makeBlock('single', {
+          timestamp: tsBase,
+          typeA: 'ai_question',
+          contentA: 'Quali sono gli orari di apertura del museo?',
+          tag: ''
+        }));
       } else if (state.type === 'answer') {
         state.patientMode = 'robot';
-        if (!state.blocks.length) {
-          state.blocks.push(makeBlock('single', { typeA: 'answer', tag: '' }));
-        }
+        if (!state.patientId) state.patientId = 'EAA007UBT10000011';
+        state.blocks.push(makeBlock('single', {
+          timestamp: tsBase,
+          typeA: 'answer',
+          contentA: 'Ciao, benvenuto! Io sono qui per te.',
+          tag: ''
+        }));
       } else if (state.type === 'question') {
-        if (!state.blocks.length) {
-          state.blocks.push(makeBlock('single', { typeA: 'question', tag: '' }));
-        }
+        if (state.patientMode === 'robot') state.patientMode = 'patient';
+        if (!state.patientId || state.patientId.startsWith('robot_')) state.patientId = '1234';
+        state.blocks.push(makeBlock('single', {
+          timestamp: tsBase,
+          typeA: 'question',
+          contentA: 'Vieni qui',
+          tag: ''
+        }));
+      } else if (state.type === 'dialog') {
+        // Dialogo: predispone coppia iniziale di dialogo
+        state.blocks.push(makeBlock('pair', {
+          timestamp: tsBase,
+          typeA: 'answer',
+          contentA: 'Ciao! Vuoi fare una storia o un gioco insieme?',
+          typeB: 'question',
+          contentB: 'Sì, volentieri!'
+        }));
       }
       renderAll();
       changed();
