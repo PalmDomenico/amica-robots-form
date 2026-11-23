@@ -67,54 +67,10 @@
   // ------------------------------------------------------------------
   // Stato
   // ------------------------------------------------------------------
-  function emptyState() {
-    const tsBase = nowLocal();
-    return {
-      patientMode: 'patient',
-      patientId: '1234',
-      type: 'dialog',
-      customType: '',
-      timestamp: tsBase,
-      sessionAuto: true,
-      sessionStart: '',
-      sessionEnd: '',
-      blocks: [
-        makeBlock('pair', {
-          timestamp: tsBase,
-          typeA: 'answer',
-          contentA: 'Ciao! Vuoi fare una storia o un gioco insieme?',
-          typeB: 'question',
-          contentB: 'Sì, volentieri!'
-        })
-      ],
-      extraJson: '',
-    };
-  }
-
-  let state = loadDraft() || emptyState();
-
-  function loadDraft() {
-    try {
-      const raw = localStorage.getItem(STORAGE_DRAFT);
-      if (!raw) return null;
-      const s = Object.assign(emptyState(), JSON.parse(raw));
-      if (!Array.isArray(s.blocks)) s.blocks = [];
-      return s;
-    } catch {
-      return null;
-    }
-  }
-  let saveTimer;
-  function saveDraft() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      try { localStorage.setItem(STORAGE_DRAFT, JSON.stringify(state)); } catch { /* quota */ }
-    }, 250);
-  }
-
-  const effectiveType = () => (state.type === '__custom' ? state.customType.trim() : state.type);
+  const effectiveType = () => (state && state.type === '__custom' ? (state.customType || '').trim() : (state ? state.type : 'dialog'));
   const effectivePatientId = () => {
-    const id = state.patientId.trim();
+    if (!state) return '';
+    const id = (state.patientId || '').trim();
     if (!id) return '';
     return state.patientMode === 'robot' && !id.startsWith('robot_') ? 'robot_' + id : id;
   };
@@ -134,20 +90,23 @@
 
   function lastEntryTimestamp() {
     let last = '';
-    state.blocks.forEach((b) => {
-      [b.a, b.b].forEach((p) => {
-        if (p && p.timestamp && (!last || localToDate(p.timestamp) > localToDate(last))) last = p.timestamp;
+    if (state && Array.isArray(state.blocks)) {
+      state.blocks.forEach((b) => {
+        [b.a, b.b].forEach((p) => {
+          if (p && p.timestamp && (!last || localToDate(p.timestamp) > localToDate(last))) last = p.timestamp;
+        });
       });
-    });
+    }
     return last;
   }
   function stepSeconds() {
-    const v = parseInt($('#auto-step').value, 10);
+    const el = $('#auto-step');
+    const v = el ? parseInt(el.value, 10) : 5;
     return Number.isFinite(v) && v >= 0 ? v : 5;
   }
   function baseTimestamp() {
-    if (effectiveType() === 'dialog' && !state.sessionAuto && state.sessionStart) return state.sessionStart;
-    return state.timestamp || nowLocal();
+    if (state && effectiveType() === 'dialog' && !state.sessionAuto && state.sessionStart) return state.sessionStart;
+    return (state && state.timestamp) || nowLocal();
   }
   function nextTimestamp() {
     const last = lastEntryTimestamp();
@@ -172,6 +131,52 @@
       };
     }
     return block;
+  }
+
+  function emptyState() {
+    const tsBase = nowLocal();
+    return {
+      patientMode: 'patient',
+      patientId: '1234',
+      type: 'dialog',
+      customType: '',
+      timestamp: tsBase,
+      sessionAuto: true,
+      sessionStart: '',
+      sessionEnd: '',
+      blocks: [
+        makeBlock('pair', {
+          timestamp: tsBase,
+          typeA: 'answer',
+          contentA: 'Ciao! Vuoi fare una storia o un gioco insieme?',
+          typeB: 'question',
+          contentB: 'Sì, volentieri!'
+        })
+      ],
+      extraJson: '',
+    };
+  }
+
+  let state = null;
+  state = loadDraft() || emptyState();
+
+  function loadDraft() {
+    try {
+      const raw = localStorage.getItem(STORAGE_DRAFT);
+      if (!raw) return null;
+      const s = Object.assign(emptyState(), JSON.parse(raw));
+      if (!Array.isArray(s.blocks)) s.blocks = [];
+      return s;
+    } catch {
+      return null;
+    }
+  }
+  let saveTimer;
+  function saveDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(STORAGE_DRAFT, JSON.stringify(state)); } catch { /* quota */ }
+    }, 250);
   }
 
   // ------------------------------------------------------------------
@@ -275,14 +280,16 @@
     const isCustom = state.type === '__custom';
     $('#session-card').hidden = !isDialog;
     $('#entries-step').textContent = isDialog ? '3' : '2';
-    $$('.card-details .step')[0].textContent = isDialog ? '4' : '3';
+    const cardStep = $$('.card-details .step')[0];
+    if (cardStep) cardStep.textContent = isDialog ? '4' : '3';
 
     // Gestione visibilita' selettiva dei pulsanti di aggiunta in base al tipo
     const btnPair = $('[data-add="pair"]');
     const btnRating = $('[data-add="rating"]');
     const btnSingle = $('[data-add="single"]');
     const retimeBtn = $('#retime-btn');
-    const autoStepField = $('#auto-step')?.closest('.field-inline');
+    const autoStepInput = $('#auto-step');
+    const autoStepField = autoStepInput && autoStepInput.closest ? autoStepInput.closest('.field-inline') : null;
 
     if (btnPair) btnPair.hidden = !isDialog && !isCustom;
     if (btnRating) btnRating.hidden = !isDialog && !isCustom;
