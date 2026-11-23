@@ -68,16 +68,25 @@
   // Stato
   // ------------------------------------------------------------------
   function emptyState() {
+    const tsBase = nowLocal();
     return {
       patientMode: 'patient',
-      patientId: '',
+      patientId: '1234',
       type: 'dialog',
       customType: '',
-      timestamp: nowLocal(),
+      timestamp: tsBase,
       sessionAuto: true,
       sessionStart: '',
       sessionEnd: '',
-      blocks: [],
+      blocks: [
+        makeBlock('pair', {
+          timestamp: tsBase,
+          typeA: 'answer',
+          contentA: 'Ciao! Vuoi fare una storia o un gioco insieme?',
+          typeB: 'question',
+          contentB: 'Sì, volentieri!'
+        })
+      ],
       extraJson: '',
     };
   }
