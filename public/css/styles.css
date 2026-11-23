@@ -223,6 +223,9 @@ textarea { resize: vertical; min-height: 38px; }
 .add-bar-sep { flex: 1; }
 
 /* ---------- Preview & result ---------- */
+.preview-details { margin-top: 14px; }
+.preview-summary { cursor: pointer; user-select: none; margin-bottom: 6px; }
+.preview-summary:hover { color: var(--text); }
 .preview {
   margin: 0; max-height: 46vh; overflow: auto;
   background: #0f172a; color: #e2e8f0;

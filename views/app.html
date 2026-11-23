@@ -48,12 +48,12 @@
           <label class="field">
             <span>type <em class="req">*</em></span>
             <select id="event-type">
-              <option value="dialog">dialog</option>
-              <option value="question">question</option>
-              <option value="answer">answer</option>
-              <option value="ai_question">ai_question</option>
-              <option value="ai_answer">ai_answer</option>
-              <option value="__custom">altro…</option>
+              <option value="dialog">dialog (sessione completa con storie, quiz, questionari)</option>
+              <option value="ai_answer">ai_answer (domanda e risposta assistente AI)</option>
+              <option value="ai_question">ai_question (singola domanda rivolta all'AI)</option>
+              <option value="question">question (singolo intervento dell'ospite)</option>
+              <option value="answer">answer (singola battuta o messaggio del robot)</option>
+              <option value="__custom">altro (personalizzato)…</option>
             </select>
           </label>
           <label class="field" id="custom-type-field" hidden>
@@ -104,11 +104,13 @@
           <h2><span class="step" id="entries-step">3</span> Voci <small class="muted">(payload.entries)</small> <span class="count" id="entries-count">0</span></h2>
           <div class="card-actions">
             <select id="template-select" class="select-sm" aria-label="Carica modello">
-              <option value="">Carica modello…</option>
-              <option value="questionario">Questionario di gradimento (dialog)</option>
-              <option value="quiz">Quiz domanda/risposta (dialog)</option>
-              <option value="storia">Storia interattiva (dialog)</option>
-              <option value="ai">Domanda e risposta AI (ai_answer)</option>
+              <option value="">Carica esempio pronto…</option>
+              <option value="ai">Esempio: Domanda e Risposta AI (Aphelino)</option>
+              <option value="storia">Esempio: Storia interattiva (Cappuccetto Rosso)</option>
+              <option value="quiz">Esempio: Quiz cognitivo</option>
+              <option value="questionario">Esempio: Questionario gradimento (1-5)</option>
+              <option value="ai_question_sample">Esempio: Singola domanda all'AI</option>
+              <option value="answer_sample">Esempio: Singolo avviso/benvenuto robot</option>
             </select>
           </div>
         </div>
@@ -145,13 +147,16 @@
     <aside class="col-side">
       <div class="card sticky">
         <div class="card-head">
-          <h2>Anteprima richiesta</h2>
-          <button class="btn btn-ghost btn-sm" type="button" id="copy-btn">Copia</button>
+          <h2>Riepilogo e Invio</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="copy-btn">Copia JSON</button>
         </div>
-        <pre class="code preview" id="preview"></pre>
         <ul class="issues" id="issues"></ul>
-        <button class="btn btn-primary btn-block btn-lg" type="button" id="send-btn">Invia evento</button>
+        <button class="btn btn-primary btn-block btn-lg" type="button" id="send-btn">Invia ad Amica</button>
         <div id="result" class="result" hidden></div>
+        <details class="preview-details">
+          <summary class="preview-summary muted small">Dettagli tecnici payload (JSON)</summary>
+          <pre class="code preview" id="preview"></pre>
+        </details>
       </div>
 
       <div class="card">

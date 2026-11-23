@@ -11,13 +11,17 @@
 
   const TYPE_HINTS = {
     dialog:
-      'Sessione di dialogo completa con session_start, session_end e la sequenza di battute. ' +
-      'Convenzione dei dati esistenti: "answer" = battuta del robot, "question" = risposta dell\'utente.',
-    question: 'Evento singolo: una o piu\' voci di tipo "question" (risposta/intervento dell\'utente).',
-    answer: 'Evento singolo: una o piu\' voci di tipo "answer" (battuta del robot).',
-    ai_question: 'Domanda rivolta all\'assistente AI del robot.',
-    ai_answer: 'Risposta dell\'assistente AI; puo\' includere anche la domanda (come nell\'esempio della documentazione).',
-    __custom: 'Tipo evento personalizzato: struttura il payload liberamente con voci e campi aggiuntivi.',
+      'Sessione guidata o continuativa (storie, quiz, questionari). Calcola in automatico inizio/fine e supporta battute multiple.',
+    ai_answer:
+      'Domanda dell\'ospite e risposta elaborata dall\'intelligenza artificiale del robot (es. Aphelino o Genoveffa).',
+    ai_question:
+      'Singola domanda rivolta all\'assistente AI prima della risposta.',
+    question:
+      'Singolo intervento vocale o risposta secca dell\'ospite.',
+    answer:
+      'Singola battuta o messaggio di benvenuto pronunciato dal robot.',
+    __custom:
+      'Tipo evento personalizzato: struttura il payload liberamente con voci e campi aggiuntivi.',
   };
 
   const $ = (sel, root) => (root || document).querySelector(sel);
@@ -513,22 +517,43 @@
     switch (name) {
       case 'questionario':
         state.type = 'dialog';
-        add('pair', { tag: 'QUESTIONARIO', contentA: 'Ciao, mi ricordi, come ti chiami?' });
-        QUESTIONARIO.forEach((q) => add('rating', { tag: 'QUESTIONARIO', contentA: q }));
+        add('pair', { tag: 'QUESTIONARIO', contentA: 'Ciao, mi ricordi, come ti chiami?', contentB: 'Mario' });
+        QUESTIONARIO.forEach((q) => add('rating', { tag: 'QUESTIONARIO', contentA: q, contentB: '5' }));
         break;
       case 'quiz':
         state.type = 'dialog';
-        add('pair', { tag: 'QUIZ', contentA: 'Ciao, mi ricordi, come ti chiami?' });
-        for (let i = 0; i < 3; i++) add('pair', { tag: 'QUIZ' });
+        add('pair', { tag: 'QUIZ', contentA: 'Qual è la capitale d\'Italia?', contentB: 'Roma' });
+        add('pair', { tag: 'QUIZ', contentA: 'Quanti giorni ha una settimana?', contentB: 'Sette' });
         break;
       case 'storia':
         state.type = 'dialog';
-        add('single', { tag: 'STORIA', typeA: 'answer', contentA: '' });
-        add('pair', { tag: 'STORIA' });
+        add('single', { tag: 'STORIA', typeA: 'answer', contentA: 'Vuoi ascoltare la storia di Cappuccetto Rosso?' });
+        add('single', { tag: 'STORIA', typeA: 'question', contentA: 'Sì' });
+        add('single', { tag: 'STORIA', typeA: 'answer', contentA: 'C\'era una volta una bambina che andava dalla nonna...' });
         break;
       case 'ai':
         state.type = 'ai_answer';
-        add('pair', { tag: '', typeA: 'ai_question', typeB: 'ai_answer' });
+        state.patientMode = 'robot';
+        if (!state.patientId) state.patientId = 'EAA007UBT10000011';
+        add('pair', {
+          tag: '',
+          typeA: 'ai_question',
+          contentA: 'Come ti chiami e cosa puoi fare?',
+          typeB: 'ai_answer',
+          contentB: 'Certo, mi chiamo Aphelino! Sono qui per farti compagnia, chiacchierare e farti fare esercizi stimolanti.'
+        });
+        break;
+      case 'ai_question_sample':
+        state.type = 'ai_question';
+        state.patientMode = 'robot';
+        if (!state.patientId) state.patientId = 'EAA007UBT10000011';
+        add('single', { tag: '', typeA: 'ai_question', contentA: 'Quali sono gli orari di apertura del museo?' });
+        break;
+      case 'answer_sample':
+        state.type = 'answer';
+        state.patientMode = 'robot';
+        if (!state.patientId) state.patientId = 'EAA007UBT10000011';
+        add('single', { tag: '', typeA: 'answer', contentA: 'Ciao, benvenuto! Io sono qui per te.' });
         break;
       default:
         return false;
@@ -731,7 +756,34 @@
     });
     $('#event-type').addEventListener('change', (e) => {
       state.type = e.target.value;
-      renderHeader();
+      if (state.type === 'ai_answer') {
+        state.patientMode = 'robot';
+        if (!state.blocks.length) {
+          state.blocks.push(makeBlock('pair', {
+            typeA: 'ai_question',
+            typeB: 'ai_answer',
+            tag: ''
+          }));
+        } else if (state.blocks[0] && state.blocks[0].kind === 'pair') {
+          state.blocks[0].a.type = 'ai_question';
+          if (state.blocks[0].b) state.blocks[0].b.type = 'ai_answer';
+        }
+      } else if (state.type === 'ai_question') {
+        state.patientMode = 'robot';
+        if (!state.blocks.length) {
+          state.blocks.push(makeBlock('single', { typeA: 'ai_question', tag: '' }));
+        }
+      } else if (state.type === 'answer') {
+        state.patientMode = 'robot';
+        if (!state.blocks.length) {
+          state.blocks.push(makeBlock('single', { typeA: 'answer', tag: '' }));
+        }
+      } else if (state.type === 'question') {
+        if (!state.blocks.length) {
+          state.blocks.push(makeBlock('single', { typeA: 'question', tag: '' }));
+        }
+      }
+      renderAll();
       changed();
     });
     $('#custom-type').addEventListener('input', (e) => { state.customType = e.target.value; changed(); });
